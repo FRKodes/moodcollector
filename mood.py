@@ -3,6 +3,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from const import SIMPLE_GEO_TOKEN, SIMPLE_GEO_SECRET, SIMPLE_GEO_LAYER
+from const import SLEEP_TIME, TWITTER_SEARCH_URL
 
 from django.utils import simplejson
 from simplegeo import Record, Client
@@ -10,10 +11,6 @@ from simplegeo import Record, Client
 import time
 import sys
 import urllib2
-
-SLEEP_TIME = 30.0
-
-TWITTER_SEARCH_URL = "http://search.twitter.com/search.json?%s"
 
 def get_twitter_search_json(params):
     """
