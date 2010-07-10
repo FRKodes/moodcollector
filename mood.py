@@ -11,7 +11,7 @@ import time
 import sys
 import urllib2
 
-SLEEP_TIME = 5.0
+SLEEP_TIME = 30.0
 
 TWITTER_SEARCH_URL = "http://search.twitter.com/search.json?%s"
 
