@@ -1,0 +1,27 @@
+Mood Collector
+
+This is a python script that uses the 
+Twitter Search API (http://dev.twitter.com/doc/get/search) to find tweets that
+contain info about someone's mood (sad, happy, ...). With the list of tweets, it
+finds the ones that contain lat, lon coordinates, and stores them in a SimpleGeo
+layer (http://simplegeo.com/).
+
+To install and run this on your own, there are a few dependencies
+
+1) First you'll need Python installed, preferably 2.6
+
+2) This script uses the cool tools written 
+   by SimpleGeo (http://github.com/simplegeo/python-simplegeo) install them
+   and the dependencies
+
+3) You'll need a SimpleGeo api key, and layer (http://simplegeo.com/signup/)
+   They will assign you a key, update const.py with your oauth info
+   
+4) then just run it using
+
+   python mood.py
+
+This is just a fun experiment, will likely update it with more moods, and better
+language processing.
+
+- Jon Rohan
