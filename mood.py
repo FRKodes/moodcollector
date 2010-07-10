@@ -7,13 +7,8 @@ from const import SIMPLE_GEO_TOKEN, SIMPLE_GEO_SECRET, SIMPLE_GEO_LAYER
 from django.utils import simplejson
 from simplegeo import Record, Client
 
-import os
-import signal
-import string
+import time
 import sys
-import threading
-import sched, time
-
 import urllib2
 
 SLEEP_TIME = 5.0
@@ -41,163 +36,166 @@ def get_twitter_search_json(params):
     return False
 
 def chunker(seq, size):
+    """
+        We can't send too much at once, so gotta chunk it up
+    """
     return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
 
 def is_happy(text):
+    """
+        If the text contains happy thoughts return true
+    """
     if text.lower().find("happy") > -1:
         return True
     return False
 
 def is_sad(text):
+    """
+        If the text contains sad thoughts return true
+    """
     if text.lower().find("sad") > -1:
         return True
     return False
 
 def get_moods(text):
+    """
+        Get a list of the moods for the text
+    """
     
     moods = []
     
     # Happy
     if is_happy(text):
         moods.append("happy")
-
+    
     # Sad
     if is_sad(text):
         moods.append("sad")
-
+    
     return moods
 
-def create_record(json,mood):
+def create_record(json, mood):
+    """
+        Create a SimpleGeo record from a mood and tweet
+    """
+    
+    # get the coordinates
     coors = json['geo']['coordinates']
     
+    # make a python timestamp
     timestamp = int(time.mktime(
         time.strptime(json['created_at'],
         "%a, %d %b %Y %H:%M:%S +0000")))
-        
+    
+    # new record
     record = Record(
         layer=SIMPLE_GEO_LAYER,
+        # making it unique by tweetid_mood
         id="%s_%s" % (json['id'], mood),
         lat=coors[0],
         lon=coors[1],
         created=timestamp,
+        # storing the mood for searching
         mood=mood
     )
+    
     return record
 
 def get_records(results):
-
+    """
+        Get a list of records from the json results
+    """
+    
+    # start with an empty list
     records = []
     
+    # for each result in results
     for result in results:
+        
+        # get the geo info
         geo = result["geo"]
+        
+        # test if geo exists, and has coordinates
         if geo and geo["coordinates"]:
+            
+            # get the moods for the tweet
             moods = get_moods(result["text"])
+            
+            # for each mood
             for mood in moods:
+                
+                # create a mood record and append it to the list
                 records.append(create_record(result, mood))
                 
     return records
 
-def im_moody():
+def main():
     """
-        
+        Main mood searching def. This will ping the twitter search api
+        every [SLEEP_TIME] seconds and find tweets that display a mood, and 
+        have a location
     """
     
+    # Found it easier to store the parameters as a list 
+    # so I can update the since_id
     params_list = [
         "q=%22happy%22+OR+%22sad%22",
         "rpp=100",
         ""
     ]
     
+    # Get the SimpleGeo Client
     client = Client(SIMPLE_GEO_TOKEN, SIMPLE_GEO_SECRET)
     
-    while True:
+    # Try block for Ctrl-C so we don't end with an exception
+    try:
         
-        records = []
+        while True:
+            
+            # Init an empty list of records
+            records = []
+            
+            # Search twitter
+            json = get_twitter_search_json('&'.join(params_list))
+            
+            # if we got something back
+            if json:
+                
+                # store the results
+                results = json["results"]
+                
+                # set the since_id so we don't search more than we need
+                params_list[2] = "since_id=%s" % json['max_id']
+                
+                # if we got at least 1 result
+                if len(results) > 0:
+                    
+                    # get the SimpleGeo records from the api
+                    records = get_records(results)
+            else:
+                
+                print "API Error: No data returned"
+            
+            # Save 90 records at a time
+            for chunk in chunker(records, 90):
+                
+                # add records to the SimpleGeo Layer
+                client.add_records(SIMPLE_GEO_LAYER, chunk)
+                
+                # how many records added
+                print "%s records added" % len(chunk)
+            
+            # Wait x seconds before continuing
+            time.sleep(SLEEP_TIME)
+            
+    except KeyboardInterrupt:
         
-        json = get_twitter_search_json('&'.join(params_list))
-        
-        if json:
-            results = json["results"]
-            params_list[2] = "since_id=%s" % json['max_id']
-            if len(results) > 0:
-                records = get_records(results)
-        
-        for chunk in chunker(records, 90):
-            client.add_records(SIMPLE_GEO_LAYER, chunk)
-            print "%s records added" % len(chunk)
-        
-        time.sleep(SLEEP_TIME)
-
-class MyThread(threading.Thread):
-    """
-    This is a wrapper for threading.Thread that improves
-    the syntax for creating and starting threads.
-    """
-    def __init__(self, target, *args):
-        threading.Thread.__init__(self, target=target, args=args)
-        print 'Initiating MyThread for %s ...' % target
-        self.start()
-
-        
-def Process():
-    child0 = MyThread(im_moody)
-    child0.join()
-
-# http://code.activestate.com/recipes/496735/
-class Watcher:
-    """this class solves two problems with multithreaded
-    programs in Python, (1) a signal might be delivered
-    to any thread (which is just a malfeature) and (2) if
-    the thread that gets the signal is waiting, the signal
-    is ignored (which is a bug).
-
-    The watcher is a concurrent process (not thread) that
-    waits for a signal and the process that contains the
-    threads.  See Appendix A of The Little Book of Semaphores.
-    http://greenteapress.com/semaphores/
-
-    I have only tested this on Linux.  I would expect it to
-    work on the Macintosh and not work on Windows.
-    """
+        print 'Ctrl-C hit'
     
-    def __init__(self):
-        """ Creates a child thread, which returns.  The parent
-            thread waits for a KeyboardInterrupt and then kills
-            the child thread.
-        """
-        self.child = os.fork()
-        if self.child == 0:
-            print 'continue onto the child process'
-            return
-        else:
-            self.watch()
-
-    def watch(self):
-        """
-        Parent process which waits for the child process to finish
-        """
-        try:
-            os.wait()
-        except KeyboardInterrupt:
-            print 'Ctrl-C hit'
-            self.kill()
-        sys.exit()
-
-    def kill(self):
-        try:
-            os.kill(self.child, signal.SIGKILL)
-        except OSError:
-            pass
-
-        
-    
-def main():
-    """
-    main documentation
-    """
-    Watcher()
-    Process()
-
+    # exit cleanly
+    sys.exit()
 
 if __name__ == '__main__':
+    
+    # hey ho, let's go
     main()
