@@ -11,6 +11,9 @@ from simplegeo import Record, Client
 import time
 import sys
 import urllib2
+import threading
+import os, signal, operator
+
 
 HAPPY_WORDS = ["happy", "blessed", "blest", "blissful", "blithe",
     "captivated", "cheerful", "chipper", "chirpy", "content", "contented",
@@ -18,7 +21,7 @@ HAPPY_WORDS = ["happy", "blessed", "blest", "blissful", "blithe",
     "gleeful", "gratified", "intoxicated", "jolly", "joyful", "joyous",
     "jubilant", "laughing", "light", "lively", "merry", "mirthful",
     "overjoyed", "peaceful", "peppy", "perky", "playful", "pleasant", "pleased",
-    "sparkling", "sunny", "thrilled", "tickled", "upbeat" ]
+    "sparkling", "sunny", "thrilled", "tickled", "upbeat"]
 
 SAD_WORDS = ["sad", "bereaved", "bitter", "cheerless", "dejected", "despairing",
     "despondent", "disconsolate", "dismal", "distressed", "doleful", "down",
@@ -28,14 +31,21 @@ SAD_WORDS = ["sad", "bereaved", "bitter", "cheerless", "dejected", "despairing",
     "pensive", "pessimistic", "somber", "sorrowful", "sorry", "troubled",
     "weeping", "wistful", "woebegone"]
 
+ANGRY_WORDS = ["angry", "affronted", "annoyed", "antagonized", "bitter",
+    "chafed", "choleric", "convulsed", "cross", "displeased", "enraged",
+    "exacerbated", "exasperated", "ferocious", "fierce", "fiery", "fuming",
+    "furious", "galled", "hateful", "heated", "hot", "huffy", "impassioned",
+    "incensed", "indignant", "inflamed", "infuriated", "irascible", "irate",
+    "ireful", "irritable", "irritated", "maddened", "nettled", "offended",
+    "outraged", "piqued", "provoked", "raging", "resentful", "riled", "sore",
+    "splenetic", "storming", "sulky", "sullen", "turbulent", "uptight",
+    "vexed", "wrathful"]
 
 def get_twitter_search_json(params):
     """
         Search the twitter Search API using the given @params
     """
     try:
-
-        print TWITTER_SEARCH_URL % params
 
         # Open the Twitter search url, using the params
         res = urllib2.urlopen(TWITTER_SEARCH_URL % params)
@@ -80,6 +90,10 @@ def get_moods(text):
     # Sad
     if is_mood(text, SAD_WORDS):
         moods.append("sad")
+
+    # Angry
+    if is_mood(text, ANGRY_WORDS):
+        moods.append("angry")
 
     return moods
 
@@ -138,18 +152,7 @@ def get_records(results):
 
     return records
 
-def prepare_mood_query():
-    """
-        Combine all of the mood words into a search query
-    """
-
-    happy = '+OR+'.join(HAPPY_WORDS)
-
-    sad = '+OR+'.join(SAD_WORDS)
-
-    return "q=%s+OR+%s" % (happy, sad)
-
-def main():
+def im_moody(mood_words):
     """
         Main mood searching def. This will ping the twitter search api
         every [SLEEP_TIME] seconds and find tweets that display a mood, and
@@ -168,57 +171,107 @@ def main():
     client = Client(SIMPLE_GEO_TOKEN, SIMPLE_GEO_SECRET)
 
     # update the query to the mood words
-    params_list[0] = prepare_mood_query()
+    params_list[0] = "q=%s" % '+OR+'.join(mood_words)
 
-    # Try block for Ctrl-C so we don't end with an exception
-    try:
+    while True:
 
-        while True:
+        # Init an empty list of records
+        records = []
 
-            # Init an empty list of records
-            records = []
+        # Search twitter
+        json = get_twitter_search_json('&'.join(params_list))
 
-            # Search twitter
-            json = get_twitter_search_json('&'.join(params_list))
+        # if we got something back
+        if json:
 
-            # if we got something back
-            if json:
+            # store the results
+            results = json["results"]
 
-                # store the results
-                results = json["results"]
+            # set the since_id so we don't search more than we need
+            params_list[2] = "since_id=%s" % json['max_id']
 
-                # set the since_id so we don't search more than we need
-                params_list[2] = "since_id=%s" % json['max_id']
+            # if we got at least 1 result
+            if len(results) > 0:
 
-                # if we got at least 1 result
-                if len(results) > 0:
+                # get the SimpleGeo records from the api
+                records = get_records(results)
+        else:
 
-                    # get the SimpleGeo records from the api
-                    records = get_records(results)
-            else:
+            print "API Error: No data returned"
 
-                print "API Error: No data returned"
+        # Save 90 records at a time
+        for chunk in chunker(records, 90):
 
-            # Save 90 records at a time
-            for chunk in chunker(records, 90):
+            # add records to the SimpleGeo Layer
+            client.add_records(SIMPLE_GEO_LAYER, chunk)
 
-                # add records to the SimpleGeo Layer
-                client.add_records(SIMPLE_GEO_LAYER, chunk)
+            # how many records added
+            print "%s %s records added" % (len(chunk), mood_words[0])
 
-                # how many records added
-                print "%s records added" % len(chunk)
+        # Wait x seconds before continuing
+        time.sleep(SLEEP_TIME)
 
-            # Wait x seconds before continuing
-            time.sleep(SLEEP_TIME)
 
-    except KeyboardInterrupt:
+class Watcher:
+    """this class solves two problems with multithreaded
+    programs in Python, (1) a signal might be delivered
+    to any thread (which is just a malfeature) and (2) if
+    the thread that gets the signal is waiting, the signal
+    is ignored (which is a bug).
 
-        print 'Ctrl-C hit'
+    The watcher is a concurrent process (not thread) that
+    waits for a signal and the process that contains the
+    threads.  See Appendix A of The Little Book of Semaphores.
+    http://greenteapress.com/semaphores/
 
-    # exit cleanly
-    sys.exit()
+    I have only tested this on Linux.  I would expect it to
+    work on the Macintosh and not work on Windows.
+    
+    Watcher taken from http://code.activestate.com/recipes/496735/
+    """
+    
+    def __init__(self):
+        """ Creates a child thread, which returns.  The parent
+            thread waits for a KeyboardInterrupt and then kills
+            the child thread.
+        """
+        self.child = os.fork()
+        if self.child == 0:
+            return
+        else:
+            self.watch()
+
+    def watch(self):
+        try:
+            os.wait()
+        except KeyboardInterrupt:
+            # I put the capital B in KeyBoardInterrupt so I can
+            # tell when the Watcher gets the SIGINT
+            print 'KeyBoardInterrupt'
+            self.kill()
+        sys.exit()
+
+    def kill(self):
+        try:
+            os.kill(self.child, signal.SIGKILL)
+        except OSError: pass
+
+class MyThread(threading.Thread):
+    """
+    This is a wrapper for threading.Thread that improves
+    the syntax for creating and starting threads.
+    """
+    def __init__(self, target, *args):
+        threading.Thread.__init__(self, target=target, args=args)
+        self.start()
 
 if __name__ == '__main__':
-
+    
+    # Python threading doesn't have a good ctrl-c keyboardinterrupt,
+    # so using code from http://code.activestate.com/recipes/496735/
+    Watcher()
+    
     # hey ho, let's go
-    main()
+    MyThread(im_moody, HAPPY_WORDS)
+    MyThread(im_moody, SAD_WORDS)
+    MyThread(im_moody, ANGRY_WORDS)
