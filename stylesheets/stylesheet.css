@@ -1,0 +1,399 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+/* LAYOUT STYLES */
+
+.outer {
+  width: 100%;
+}
+
+.inner {
+  position: relative;
+  width: 748px;
+  margin: 0 auto;
+  padding-left: 99px;
+  padding-right: 99px;
+}
+
+header {
+  padding-top: 35px;
+  padding-bottom: 35px;
+}
+
+#forkme_banner {
+  position: absolute;
+  top:0;
+  right:0;
+  z-index: 10;
+  width: 149px;
+  height: 149px;
+  text-indent: -5000px;
+  overflow: hidden;
+  display: block;
+}
+
+#sourcelink {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+#downloads {
+  position: absolute;
+  z-index: 10;
+  top: -18px;
+  right: 99px;
+  height: 70px;
+  padding: 0 0 0 40px;
+  background: url('../images/layout/icon_download.png') no-repeat 0% 65%;
+}
+
+#sourcelink p {
+  position: relative;
+}
+
+#main_content {
+  padding-top: 35px;
+  padding-bottom: 35px;
+}
+
+#footer_wrap {
+  padding-top: 35px;
+  padding-bottom: 35px;
+}
+
+img {
+  position: relative;
+  margin: 0 auto;
+  max-width: 739px;
+  padding: 5px;
+  margin: 10px 0 10px 0;
+  border: 1px solid #ebebeb; 
+  
+  box-shadow: 0 0 5px #ebebeb;
+  -webkit-box-shadow: 0 0 5px #ebebeb;
+  -moz-box-shadow: 0 0 5px #ebebeb;
+}
+
+ul, ol, dl {
+  margin-bottom: 10px;
+}
+
+/* AZURE COLORS */
+.color-azure #header_wrap,
+.color-azure #footer_wrap {
+  background: #2a2a32;
+}
+
+.color-azure #forkme_banner {
+  background: url('../images/layout/forkme_orange.png') no-repeat top;
+}
+
+.color-azure #project_title,
+.color-azure #project_tagline {
+  color: #fff;
+}
+
+.color-azure #sourcelink_wrap {  
+  background: #d6ebff;
+  border-bottom: 1px solid #a4c8ec; 
+}
+
+.color-azure #sourcelink p {
+  color: #2a2a32;
+}
+
+.color-azure a {
+  color: #4183c4;
+}
+
+.color-azure .zip_download_link {
+  display: block;
+  float: left;
+  width: 90px;
+  height:70px;
+  text-indent: -5000px;
+  overflow: hidden;
+  background: url(../images/layout/download_blue_zip.png) no-repeat top center;
+}
+
+.color-azure .tar_download_link {
+  display: block;
+  float: left;
+  width: 90px;
+  height:70px;
+  text-indent: -5000px;
+  overflow: hidden;
+  background: url('../images/layout/download_blue_tar.png');
+  margin-left: 20px;
+}
+
+.color-azure footer {
+  color: #fff;
+}
+
+.color-azure #footer_wrap {
+  border-top: 1px solid #b3d1f0;
+}
+
+/* NEUTRAL COLORS */
+.color-neutral #header_wrap,
+.color-neutral #footer_wrap {
+  background: #cbc9c5;
+  border-top: 2px solid #bab7b1;
+  border-bottom: 2px solid #bab7b1;
+
+}
+
+.color-neutral #forkme_banner {
+  background: url('../images/layout/forkme_blue.png') no-repeat top;
+}
+
+.color-neutral #project_title,
+.color-neutral #project_tagline {
+  color: #222;
+  text-shadow: #fff 0px 1px 0px;
+}
+
+.color-neutral #sourcelink_wrap {    
+  background: #222;
+}
+
+.color-neutral #sourcelink p {
+  color: #fff;
+}
+
+.color-neutral #main_content_wrap {
+  border-top: 2px solid #e9e9e9;
+  border-bottom: 2px solid #e9e9e9;
+}
+
+.color-neutral a {
+  color: #4183c4;
+}
+
+.color-neutral .zip_download_link {
+  display: block;
+  float: left;
+  width: 90px;
+  height:70px;
+  text-indent: -5000px;
+  overflow: hidden;
+  background: url(../images/layout/download_darkgray_zip.png) no-repeat top center;
+}
+
+.color-neutral .tar_download_link {
+  display: block;
+  float: left;
+  width: 90px;
+  height:70px;
+  text-indent: -5000px;
+  overflow: hidden;
+  background: url('../images/layout/download_darkgray_tar.png');
+  margin-left: 20px;
+}
+
+.color-neutral footer {
+  color: #fff;
+}
+
+
+/* COMMON STYLES */
+
+hr {
+  height: 21px;
+  border: none;
+  background: url('../images/layout/bg_hr.png') repeat-x center;
+}
+
+table {
+  width: 100%;
+  border: 1px solid #ebebeb;
+}
+
+th {
+  font-weight: 500;
+}
+
+td {
+  border: 1px solid #ebebeb;
+  text-align: center; 
+  font-weight: 300;
+}
+
+form {
+  background: #f2f2f2;
+  padding: 20px;
+  
+}
+
+
+/* SPECIFIC ELEMENT TYPE STYLES */
+
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 1em;
+  line-height: 1.5;	
+}
+
+#project_title {
+  font-weight: 700;
+}
+
+#project_tagline {
+  font-size: 1.4em;
+  font-weight: 300;
+}
+
+#sourcelink p {
+  width: 42em;	
+  font-size: 18px;
+}
+
+#main_content p {
+  color: #454444;
+  font-size: 1em;
+  width: 42em;
+  margin-bottom: 2em;
+}
+
+/* GENERAL ELEMENT TYPE STYLES */
+
+h1 {
+  font-size: 2.8em;
+} 
+
+h2 {
+  font-size: 2.2em;
+} 
+
+h3 {
+  font-size: 1.8em;
+  padding: 0 0 0 99px;
+  height: 40px;
+  /* negative margin for icons */
+  margin-left: -99px;
+} 
+ 
+h4 {
+  font-size: 1.4em;
+} 
+
+h5 {
+  font-size: 1em;
+} 
+
+h6 {
+  font-size: .8em;
+} 
+
+p {
+  font-weight: 300;
+}
+ 
+a {
+  text-decoration: none;
+}
+
+p a {
+  font-weight: 500;
+}
+
+
+blockquote {
+  font-size: 1.6em;
+  border-left: 10px solid #e9e9e9;
+  margin-bottom: 20px;
+  padding: 0 0 0 30px;
+}
+
+ul li {
+  list-style: circle inside;
+  padding-left: 3px;
+}
+
+ol li {
+  list-style: decimal inside;
+  padding-left: 3px;
+}
+
+dl dd {
+  font-style: italic;
+  font-weight: 100;
+}
+
+
+/* ICONS */
+body.icons .description {
+  background: url('../images/layout/icon_about.png') no-repeat 5% 50%;
+}
+
+body.icons .dependencies {
+  background: url('../images/layout/icon_dependencies.png') no-repeat 5% 50%;
+}
+
+body.icons .authors {
+  background: url('../images/layout/icon_authors.png') no-repeat 5% 50%;
+}
+
+body.icons .support {
+  background: url('../images/layout/icon_support.png') no-repeat 5% 50%;
+}
+
+body.icons .contact {
+  background: url('../images/layout/icon_contact.png') no-repeat 5% 50%;
+}
+
+body.icons .installation {
+  background: url('../images/layout/icon_installation.png') no-repeat 5% 50%;
+}
+
+body.icons .clone {
+  background: url('../images/layout/icon_clone.png') no-repeat 5% 50%;
+}
